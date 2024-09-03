@@ -1,4 +1,4 @@
-CREATE DATABASE web_programming;
+CREATE DATABASE IF NOT EXISTS web_programming;
 
 USE web_programming;
 

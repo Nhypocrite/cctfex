@@ -24,8 +24,13 @@ This is a simple stock trading website built with Flask and MySQL (MariaDB). The
 You can create a virtual environment to manage dependencies:
 
 ```bash
-python -m venv venv
-source venv/bin/activate  # On Windows use `venv\Scripts\activate`
+python -m venv venv-cctfex
+
+# On Windows, run:
+venv-cctfex\Scripts\activate
+# On Unix or MacOS, run:
+source venv-cctfex/bin/activate
+
 ```
 
 3. Install dependencies
@@ -147,9 +152,24 @@ curl -X GET "http://127.0.0.1:5000/order_book?type=sell"
 ```bash
 {
     "orders": [
-        {"token_id":1, "order_type": 1, "price": 150.00, "amount": 10},  
-        {"token_id":1, "order_type": 1, "price": 149.50, "amount": 20},
-        {"token_id":1, "order_type": 1, "price": 149.00, "amount": 15}
+        {
+            "amount": "2.87",
+            "order_type": 1,
+            "price": "51814.29",
+            "token_id": 1
+        },
+        {
+            "amount": "4.13",
+            "order_type": 1,
+            "price": "51806.58",
+            "token_id": 1
+        },
+        {
+            "amount": "3.42",
+            "order_type": 1,
+            "price": "51756.91",
+            "token_id": 1
+        },
     ]
 }
 
@@ -178,32 +198,32 @@ curl -X GET http://127.0.0.1:5000/kline_data
 ```bash
 [
     {
-        "timestamp": "2024-09-01 09:00:00",
-        "open": 150.00,
-        "high": 155.00,
-        "low": 149.00,
-        "close": 152.00,
-        "volume": 100.5,
-        "turnover": 15176.50
+        "close": "60145.54",
+        "high": "60145.54",
+        "low": "60106.72",
+        "open": "60106.72",
+        "timestamp": "2024-09-03 06:26:49",
+        "turnover": "200275.3314",
+        "volume": "3.33"
     },
     {
-        "timestamp": "2024-09-01 10:00:00",
-        "open": 152.00,
-        "high": 154.50,
-        "low": 151.00,
-        "close": 153.50,
-        "volume": 120.3,
-        "turnover": 18456.45
+        "close": "60112.71",
+        "high": "60133.74",
+        "low": "60112.71",
+        "open": "60133.74",
+        "timestamp": "2024-09-03 06:27:49",
+        "turnover": "560429.2122",
+        "volume": "9.32"
     },
     {
-        "timestamp": "2024-09-01 11:00:00",
-        "open": 153.50,
-        "high": 157.00,
-        "low": 152.50,
-        "close": 156.00,
-        "volume": 95.8,
-        "turnover": 14899.60
-    }
+        "close": "60073.11",
+        "high": "60073.11",
+        "low": "60073.11",
+        "open": "60073.11",
+        "timestamp": "2024-09-03 06:28:49",
+        "turnover": "310577.9787",
+        "volume": "5.17"
+    },
 ]
 ```
 
