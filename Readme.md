@@ -84,6 +84,10 @@ if __name__ == "__main__":
     generate_test_data()  
     app.run(debug=True)
 ```
+
+Also, you can use `refresh_test_data` endpoint to manually refresh test data.
+
+
 7. Run the application
 You can now start the Flask application:
 
@@ -233,6 +237,11 @@ curl -X GET http://127.0.0.1:5000/kline_data
 ]
 ```
 
+##### 6. Refresh Test Data
+
+- **URL:** `/refresh_test_data`
+- **Method:** `GET`
+- **Description:** Refresh new test data inside datebase for testing.
 
 
 
