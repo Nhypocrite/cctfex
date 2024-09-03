@@ -48,7 +48,9 @@ mysql -u your_username -p
 > see `spot.sql`
 
 5. Configure the application
-Open the app.py file and update the database connection configuration with your own credentials:
+  Open the app.py file and update the database connection configuration with your own credentials:
+
+  If you are using the default setting of MariaDB ( for example, using WinNMP), there's no need to change it. 
 
 ```python
 db_config = {
@@ -58,15 +60,26 @@ db_config = {
     'database': 'web_programming'
 }
 ```
-6. Run the application
+
+6. Generate test data
+You can use the build-in function `generate_test_data()` to easily generate some data for testing.
+
+It is automatically enabled before running the server for easier testing: 
+
+in `app.py`, near the end of the file:
+
+```python
+if __name__ == "__main__":
+    generate_test_data()  
+    app.run(debug=True)
+```
+7. Run the application
 You can now start the Flask application:
 
 ```bash
 python app.py
 ```
 Open your web browser and go to http://127.0.0.1:5000/ to view the website.
-
-
 
 
 #### API Endpoints

@@ -32,7 +32,10 @@ def register():
             cursor = connection.cursor()
             cursor.execute(
                 "INSERT INTO users (username, password) VALUES (%s, %s)",
-                (username, encrypted_password),
+                (
+                    username,
+                    encrypted_password,
+                ),
             )
             connection.commit()
             cursor.close()
@@ -51,9 +54,7 @@ def login():
 
         connection = mysql.connector.connect(**db_config)
         cursor = connection.cursor()
-        cursor.execute(
-            "SELECT id, username, password FROM users WHERE username = %s", (username,)
-        )
+        cursor.execute("SELECT id, username, password FROM users WHERE username = %s", (username,))
         user = cursor.fetchone()
 
         if user and user[2] == encrypted_password:
@@ -97,16 +98,29 @@ def place_order():
 
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
-    # TODO: 写一下撮合交易
+
+    # TODO: 写一下撮合交易的逻辑
     cursor.execute(
         "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
-        (token_id, user_id, order_type, price, amount),
+        (
+            token_id,
+            user_id,
+            order_type,
+            price,
+            amount,
+        ),
     )
     connection.commit()
 
     cursor.execute(
         "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
-        (token_id, user_id, order_type, price, amount),
+        (
+            token_id,
+            user_id,
+            order_type,
+            price,
+            amount,
+        ),
     )
     connection.commit()
     cursor.close()
@@ -118,48 +132,50 @@ def place_order():
 # 获取订单簿数据
 @app.route("/order_book", methods=["GET"])
 def get_order_book():
-    order_type = request.args.get("order_type", "").lower()
+    order_type = request.args.get("type", "").lower()
 
     # Validate order_type to be either 'buy' or 'sell'
     if order_type not in ["buy", "sell"]:
         return jsonify({"error": "Invalid order_type. Must be 'buy' or 'sell'."}), 400
 
-    token_id = int(
-        request.args.get("token_id", 1)
-    )  # 可能没有这个参数。如果没有这个参数，那么它就是1
+    token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
 
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
 
     # Use parameterized query to prevent SQL injection
     if order_type == "buy":
-        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 10"
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 20"
     else:
-        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 10"
-
-    cursor.execute(query, (token_id,))
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 20"
+    # TODO: 按照价格排序后再给前端送过去？还是让前端自己排序？
+    cursor.execute(query)
 
     orders = cursor.fetchall()
     cursor.close()
     connection.close()
 
+    # TODO: 订单簿按照一个指定宽度来聚合：比如，如果有多个相同价格范围的订单，那么将它们合并成一个条目来显示
     return jsonify({"orders": orders})
 
 
 # 获取K线数据
 @app.route("/kline_data")
 def get_kline_data():
+    # TODO: 检查下K线生成逻辑的代码是否正确
+    # TODO: 检查下是不是没有的交易数据的时候也正常生成了K线
+    # TODO: 看看请求中要不要加上时间范围，在sql中补充上
+    # TODO: sql注入攻击的预防
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
 
-    token_id = int(
-        request.args.get("token_id", 1)
-    )  # 可能没有这个参数。如果没有这个参数，那么它就是1
+    # token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
+    token_id = 1
 
     # 获取交易历史数据
     cursor.execute(
-        "SELECT price, amount, timestamp FROM trade_history where token_id = %d ORDER BY timestamp ASC",
-        (token_id),
+        "SELECT price, amount, timestamp FROM trade_history where token_id = %s and timestamp > NOW() - INTERVAL 1 DAY ORDER BY timestamp ASC",
+        (token_id,),
     )
     trades = cursor.fetchall()
 
@@ -169,7 +185,7 @@ def get_kline_data():
     # 生成K线数据
     kline_data = []
     if trades:
-        interval = timedelta(hours=1)  # 按小时分割K线
+        interval = timedelta(minutes=1)  # 按分钟分割K线
         start_time = trades[0]["timestamp"]
         end_time = start_time + interval
 
@@ -181,7 +197,7 @@ def get_kline_data():
         turnover = 0
 
         for trade in trades:
-            if trade["timestamp"] >= end_time:
+            if trade["timestamp"] >= end_time:  # 新的K线
                 kline_data.append(
                     {
                         "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -230,40 +246,80 @@ def generate_test_data():
     cursor = connection.cursor()
 
     # 清空已有数据
-    cursor.execute("DELETE FROM trade_history")
-    cursor.execute("DELETE FROM order_book")
+    cursor.execute("TRUNCATE TABLE trade_history")
+    cursor.execute("TRUNCATE TABLE order_book")
 
-    # 生成随机的历史交易数据
-    start_time = datetime.now() - timedelta(days=10)
-    for _ in range(1000):  # 生成100条数据
-        timestamp = start_time + timedelta(minutes=random.randint(1, 1440))
-        open_price = random.uniform(100, 200)
-        close_price = open_price + random.uniform(-5, 5)
-        high_price = max(open_price, close_price) + random.uniform(0, 5)
-        low_price = min(open_price, close_price) - random.uniform(0, 5)
-        amount = random.uniform(1, 10)
+    order_types = [1, 2]  # 1: buy, 2: sell
+    price_previous = random.uniform(49000, 71000)
 
+    # 生成随机的订单簿数据
+    for _ in range(100):
+        # 买单
+        order_type = 1
+        price = price_previous - round(random.uniform(10, 1000), 2)
+        amount = random.uniform(0.1, 10)  # Randomly generate amount
+        timestamp = datetime.now() - timedelta(seconds=random.randint(1, 1000))  # 倒着生成
+        query = """
+        INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp)
+        VALUES (%s,%s, %s, %s, %s, %s)
+        """
         cursor.execute(
-            "INSERT INTO trade_history (user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s)",
-            (111, "buy", close_price, amount, timestamp),
+            query,
+            (
+                1,
+                111,
+                order_type,
+                price,
+                amount,
+                timestamp,
+            ),
         )
 
-    # TODO: 订单簿厚一点，否则可能被打穿
-    # 生成随机的订单簿数据
-    order_types = [1, 2]
-    for _ in range(300):
-        order_type = random.choice(order_types)
-        price = round(
-            random.uniform(10, 100), 2
-        )  # Randomly generate price, rounded to two decimal places
-        amount = random.randint(1, 100)  # Randomly generate amount
-        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
-
+        # 卖单
+        order_type = 2
+        price = price_previous + round(random.uniform(10, 1000), 2)
+        amount = random.uniform(0.1, 10)
+        timestamp = datetime.now() - timedelta(seconds=random.randint(1, 1000))
         query = """
-        INSERT INTO order_book (order_type, price, amount, timestamp)
-        VALUES (%s, %s, %s, %s)
+        INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp)
+        VALUES (%s,%s, %s, %s, %s, %s)
         """
-        cursor.execute(query, (order_type, price, amount, timestamp))
+        cursor.execute(
+            query,
+            (
+                1,
+                111,
+                order_type,
+                price,
+                amount,
+                timestamp,
+            ),
+        )
+        # TODO: 非重要优化：插入数据时，多条数据一起插入而不是一条一条插入
+
+    # 生成随机的历史交易数据
+    timestamp = datetime.now()
+
+    for _ in range(2000):  # 生成数据
+        timestamp = timestamp - timedelta(seconds=random.randint(10, 60))  # 倒着生成
+        price_then = price_previous + random.uniform(-50, 50)
+        # high_price = max(open_price, close_price) + random.uniform(0, 5)
+        # low_price = min(open_price, close_price) - random.uniform(0, 5)
+        amount = random.uniform(0.1, 10)
+        order_type = random.choice(order_types)
+
+        cursor.execute(
+            "INSERT INTO trade_history (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
+            (
+                1,
+                2049,
+                order_type,
+                price_then,
+                amount,
+                timestamp,
+            ),
+        )
+        price_previous = price_then
 
     connection.commit()
     cursor.close()
