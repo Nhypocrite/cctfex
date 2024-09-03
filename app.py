@@ -146,7 +146,7 @@ def get_kline_data():
     cursor = connection.cursor(dictionary=True)
     
     # 获取交易历史数据
-    cursor.execute("SELECT price, timestamp FROM trade_history ORDER BY timestamp ASC")
+    cursor.execute("SELECT price, amount, timestamp FROM trade_history ORDER BY timestamp ASC")
     trades = cursor.fetchall()
     
     cursor.close()
@@ -163,32 +163,44 @@ def get_kline_data():
         high_price = open_price
         low_price = open_price
         close_price = open_price
+        volume = 0
+        turnover = 0
 
         for trade in trades:
             if trade['timestamp'] >= end_time:
                 kline_data.append({
+                    "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
                     "open": open_price,
                     "close": close_price,
                     "high": high_price,
-                    "low": low_price
+                    "low": low_price,
+                    "volume": volume,
+                    "turnover": turnover
                 })
                 start_time = end_time
                 end_time = start_time + interval
                 open_price = trade['price']
                 high_price = open_price
                 low_price = open_price
+                volume = 0
+                turnover = 0
 
             close_price = trade['price']
             if close_price > high_price:
                 high_price = close_price
             if close_price < low_price:
                 low_price = close_price
+            volume += trade['amount']
+            turnover += trade['price'] * trade['amount']
 
         kline_data.append({
+            "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
             "open": open_price,
             "close": close_price,
             "high": high_price,
-            "low": low_price
+            "low": low_price,
+            "volume": volume,
+            "turnover": turnover
         })
 
     return jsonify(kline_data)
