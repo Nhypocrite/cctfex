@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Stock Trading Platform</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+</head>
+<body>
+    <h1>Welcome, {{ username }}</h1>
+
+    <div id="orderBook">
+        <h2>Order Book</h2>
+        <table>
+            <thead>
+                <tr>
+                    <th>Type</th>
+                    <th>Price</th>
+                    <th>Amount</th>
+                </tr>
+            </thead>
+            <tbody id="orderBookTable"></tbody>
+        </table>
+    </div>
+
+    <div id="klineChart">
+        <h2>K-Line Chart</h2>
+        <canvas id="klineCanvas" width="800" height="400"></canvas>
+    </div>
+
+    <div id="orderForm">
+        <h2>Place Order</h2>
+        <form id="orderForm">
+            <label for="orderType">Order Type:</label>
+            <select id="orderType">
+                <option value="buy">Buy</option>
+                <option value="sell">Sell</option>
+            </select><br>
+            
+            <label for="price">Price:</label>
+            <input type="number" id="price" required><br>
+            
+            <label for="amount">Amount:</label>
+            <input type="number" id="amount" required><br>
+            
+            <button type="button" onclick="placeOrder()">Submit Order</button>
+        </form>
+    </div>
+
+    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+</body>
+</html>
