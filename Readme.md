@@ -11,6 +11,12 @@ This is a simple stock trading website built with Flask and MySQL (MariaDB). The
 - View K-line chart based on historical trade data
 - Simple frontend using HTML, CSS, and JavaScript
 
+#### Available API Endpoint
+
+For testing purposes, you can use the following API endpoint:
+
+`https://intis.top/cctfex/`
+
 #### Prerequisites
 
 1. Before you begin, ensure you have met the following requirements:
