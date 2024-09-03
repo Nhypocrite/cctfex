@@ -17,7 +17,7 @@ db_config = {
 
 
 def hash_password(password):
-    return hashlib.sha256((password+salt).encode('utf-8')).hexdigest()
+    return hashlib.sha256((password + salt).encode("utf-8")).hexdigest()
 
 
 @app.route("/register", methods=["GET", "POST"])
@@ -25,7 +25,7 @@ def register():
     if request.method == "POST":
         username = request.form.get("username")
         encrypted_password = hash_password(request.form["password"])
-        
+
         # 插入用户数据到数据库
         try:
             connection = mysql.connector.connect(**db_config)
@@ -81,6 +81,7 @@ def index():
         return redirect(url_for("login"))
     return render_template("index.html", username=session["username"])
 
+
 # 下单操作
 @app.route("/place_order", methods=["POST"])
 def place_order():
@@ -88,6 +89,7 @@ def place_order():
         return jsonify({"status": "error", "message": "User not logged in"}), 401
 
     data = request.json
+    token_id = data["token_id"]
     order_type = data["type"]
     price = data["price"]
     amount = data["amount"]
@@ -97,14 +99,14 @@ def place_order():
     cursor = connection.cursor()
     # TODO: 写一下撮合交易
     cursor.execute(
-        "INSERT INTO order_book (user_id, order_type, price, amount) VALUES (%s, %s, %s, %s)",
-        (user_id, order_type, price, amount),
+        "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
+        (token_id, user_id, order_type, price, amount),
     )
     connection.commit()
 
     cursor.execute(
-        "INSERT INTO trade_history (user_id, order_type, price, amount) VALUES (%s, %s, %s, %s)",
-        (user_id, order_type, price, amount),
+        "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
+        (token_id, user_id, order_type, price, amount),
     )
     connection.commit()
     cursor.close()
@@ -112,43 +114,55 @@ def place_order():
 
     return jsonify({"status": "success"})
 
+
 # 获取订单簿数据
 @app.route("/order_book", methods=["GET"])
 def get_order_book():
-    order_type = request.args.get('order_type', '').lower()
-    
+    order_type = request.args.get("order_type", "").lower()
+
     # Validate order_type to be either 'buy' or 'sell'
-    if order_type not in ['buy', 'sell']:
+    if order_type not in ["buy", "sell"]:
         return jsonify({"error": "Invalid order_type. Must be 'buy' or 'sell'."}), 400
+
+    token_id = int(
+        request.args.get("token_id", 1)
+    )  # 可能没有这个参数。如果没有这个参数，那么它就是1
 
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
-    
-    # Use parameterized query to prevent SQL injection
-    if order_type == 'buy':
-        query = "SELECT order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 10"
-    else:
-        query = "SELECT order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 10"
 
-    cursor.execute(query)
-    
+    # Use parameterized query to prevent SQL injection
+    if order_type == "buy":
+        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 10"
+    else:
+        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 10"
+
+    cursor.execute(query, (token_id,))
+
     orders = cursor.fetchall()
     cursor.close()
     connection.close()
-    
+
     return jsonify({"orders": orders})
 
 
 # 获取K线数据
-@app.route('/kline_data')
+@app.route("/kline_data")
 def get_kline_data():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
-    
+
+    token_id = int(
+        request.args.get("token_id", 1)
+    )  # 可能没有这个参数。如果没有这个参数，那么它就是1
+
     # 获取交易历史数据
-    cursor.execute("SELECT price, amount, timestamp FROM trade_history ORDER BY timestamp ASC")
+    cursor.execute(
+        "SELECT price, amount, timestamp FROM trade_history where token_id = %d ORDER BY timestamp ASC",
+        (token_id),
+    )
     trades = cursor.fetchall()
-    
+
     cursor.close()
     connection.close()
 
@@ -156,10 +170,10 @@ def get_kline_data():
     kline_data = []
     if trades:
         interval = timedelta(hours=1)  # 按小时分割K线
-        start_time = trades[0]['timestamp']
+        start_time = trades[0]["timestamp"]
         end_time = start_time + interval
 
-        open_price = trades[0]['price']
+        open_price = trades[0]["price"]
         high_price = open_price
         low_price = open_price
         close_price = open_price
@@ -167,41 +181,45 @@ def get_kline_data():
         turnover = 0
 
         for trade in trades:
-            if trade['timestamp'] >= end_time:
-                kline_data.append({
-                    "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-                    "open": open_price,
-                    "close": close_price,
-                    "high": high_price,
-                    "low": low_price,
-                    "volume": volume,
-                    "turnover": turnover
-                })
+            if trade["timestamp"] >= end_time:
+                kline_data.append(
+                    {
+                        "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                        "open": open_price,
+                        "close": close_price,
+                        "high": high_price,
+                        "low": low_price,
+                        "volume": volume,
+                        "turnover": turnover,
+                    }
+                )
                 start_time = end_time
                 end_time = start_time + interval
-                open_price = trade['price']
+                open_price = trade["price"]
                 high_price = open_price
                 low_price = open_price
                 volume = 0
                 turnover = 0
 
-            close_price = trade['price']
+            close_price = trade["price"]
             if close_price > high_price:
                 high_price = close_price
             if close_price < low_price:
                 low_price = close_price
-            volume += trade['amount']
-            turnover += trade['price'] * trade['amount']
+            volume += trade["amount"]
+            turnover += trade["price"] * trade["amount"]
 
-        kline_data.append({
-            "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
-            "open": open_price,
-            "close": close_price,
-            "high": high_price,
-            "low": low_price,
-            "volume": volume,
-            "turnover": turnover
-        })
+        kline_data.append(
+            {
+                "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
+                "open": open_price,
+                "close": close_price,
+                "high": high_price,
+                "low": low_price,
+                "volume": volume,
+                "turnover": turnover,
+            }
+        )
 
     return jsonify(kline_data)
 
@@ -230,27 +248,26 @@ def generate_test_data():
             (111, "buy", close_price, amount, timestamp),
         )
 
-    # TODO: 订单簿厚一点，否则可能被打穿 
+    # TODO: 订单簿厚一点，否则可能被打穿
     # 生成随机的订单簿数据
     order_types = [1, 2]
     for _ in range(300):
         order_type = random.choice(order_types)
-        price = round(random.uniform(10, 100), 2)  # Randomly generate price, rounded to two decimal places
+        price = round(
+            random.uniform(10, 100), 2
+        )  # Randomly generate price, rounded to two decimal places
         amount = random.randint(1, 100)  # Randomly generate amount
-        timestamp = datetime.now().strftime('%Y-%m-%d %H:%M:%S')
+        timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
 
         query = """
         INSERT INTO order_book (order_type, price, amount, timestamp)
         VALUES (%s, %s, %s, %s)
         """
         cursor.execute(query, (order_type, price, amount, timestamp))
-    
 
     connection.commit()
     cursor.close()
     connection.close()
-
-
 
 
 if __name__ == "__main__":
