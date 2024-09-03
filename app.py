@@ -240,6 +240,21 @@ def get_kline_data():
     return jsonify(kline_data)
 
 
+# 触发重新生成测试数据
+@app.route("/refresh_test_data")
+def refresh_test_data():
+    generate_test_data()
+    current_time = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
+    return jsonify({
+        "message": "Test data successfully refreshed!",
+        "updated_at": current_time,
+        "refresh_details": {
+            "trade_history": "4000 trades added (in the past 1000 min, interval ~15s)",
+            "order_book": "top 200 buy/sell orders updated"
+        },
+    })
+
+
 # 生成测试数据的函数
 def generate_test_data():
     connection = mysql.connector.connect(**db_config)
@@ -300,8 +315,8 @@ def generate_test_data():
     # 生成随机的历史交易数据
     timestamp = datetime.now()
 
-    for _ in range(2000):  # 生成数据
-        timestamp = timestamp - timedelta(seconds=random.randint(10, 60))  # 倒着生成
+    for _ in range(4000):  # 生成数据
+        timestamp = timestamp - timedelta(seconds=random.randint(5, 25))  # 倒着生成
         price_then = price_previous + random.uniform(-50, 50)
         # high_price = max(open_price, close_price) + random.uniform(0, 5)
         # low_price = min(open_price, close_price) - random.uniform(0, 5)
