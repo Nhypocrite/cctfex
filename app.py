@@ -3,10 +3,14 @@ from flask_cors import CORS
 import mysql.connector
 import hashlib
 import random
+import os
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
+
+# 设置 secret_key，应该是一个随机且安全的字符串，用于 session 加密
+app.secret_key = os.urandom(24)# 使用 os.urandom(24) 来生成一个安全的密钥
 
 salt = "NTUSALT1234"
 
