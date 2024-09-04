@@ -147,14 +147,14 @@ def place_order():
         connection.commit()
 
         if  trade_amount == match_amount:
-            cursor.execute("DELETE FROM order_book WHERE id = %s AND amount = %s", 
-                           (match_id, match_amount),
+            cursor.execute("DELETE FROM order_book WHERE id = %s", 
+                           (match_id,)
                            )
 
         else:
             cursor.execute(
-                "UPDATE order_book SET amount = amount - %s WHERE id = %s AND amount = %s",
-                (trade_amount, match_id, match_amount),
+                "UPDATE order_book SET amount = amount - %s WHERE id = %s",
+                (trade_amount, match_id),
             )
         connection.commit()
 
