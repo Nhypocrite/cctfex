@@ -112,17 +112,59 @@ def place_order():
     )
     connection.commit()
 
-    cursor.execute(
-        "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
-        (
-            token_id,
-            user_id,
-            order_type,
-            price,
-            amount,
-        ),
-    )
-    connection.commit()
+    if order_type == "buy" or order_type == '1': # if the type is 'buy'
+            cursor.execute(
+                "SELECT id, user_id, price, amount FROM order_book WHERE token_id = %s AND order_type = '2' AND price <= %s ORDER BY price ASC",
+                (token_id, price),
+            )
+    else: # else the type is sell
+        cursor.execute(
+            "SELECT id, user_id, price, amount FROM order_book WHERE token_id = %s AND order_type = '1' AND price >= %s ORDER BY price DESC",
+            (token_id, price),
+        )
+
+    matching_orders = cursor.fetchall()
+
+    for match in matching_orders:
+        match_id, match_user_id, match_price, match_amount = match
+
+        if amount <= 0:
+            break
+
+        trade_amount = min(amount, match_amount)
+        amount -= trade_amount
+
+        cursor.execute(
+            "INSERT INTO trade_history (token_id, buy_user_id, sell_user_id, price, amount) VALUES (%s, %s, %s, %s, %s)",
+            (
+                token_id,
+                user_id if order_type == "1" else match_user_id,
+                match_user_id if order_type == "1" else user_id,
+                match_price,
+                trade_amount,
+            ),
+        )
+        connection.commit()
+
+        if  trade_amount == match_amount:
+            cursor.execute("DELETE FROM order_book WHERE id = %s AND amount = %s", 
+                           (match_id, match_amount),
+                           )
+
+        else:
+            cursor.execute(
+                "UPDATE order_book SET amount = amount - %s WHERE id = %s AND amount = %s",
+                (trade_amount, match_id, match_amount),
+            )
+        connection.commit()
+
+    if amount > 0:
+        cursor.execute(
+            "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
+            (token_id, user_id, order_type, price, amount),
+        )
+        connection.commit()
+
     cursor.close()
     connection.close()
 
