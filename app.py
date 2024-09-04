@@ -1,10 +1,13 @@
 from flask import Flask, render_template, redirect, url_for, request, jsonify, session
+from flask_cors import CORS
 import mysql.connector
 import hashlib
 import random
 from datetime import datetime, timedelta
 
 app = Flask(__name__)
+CORS(app)
+
 salt = "NTUSALT1234"
 
 # 配置数据库连接
@@ -13,6 +16,8 @@ db_config = {
     "password": "",
     "host": "localhost",
     "database": "web_programming",
+    "charset":"utf8mb4",
+    "collation":"utf8mb4_general_ci"
 }
 
 
