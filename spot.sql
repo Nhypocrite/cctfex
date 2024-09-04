@@ -17,7 +17,7 @@ CREATE TABLE IF NOT EXISTS order_book (
     order_type smallint NOT NULL,  -- 1-'buy', 2-'sell'
     price DECIMAL(10, 2) NOT NULL,
     amount DECIMAL(10, 2) NOT NULL,
-    timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+    timestamp DATETIME NOT NULL,
     INDEX idx_token_id (token_id)  -- 添加索引用于排序
 
 );

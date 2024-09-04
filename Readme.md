@@ -19,34 +19,37 @@ For testing purposes, you can use the following API endpoint:
 
 #### Prerequisites
 
-1. Before you begin, ensure you have met the following requirements:
+##### 1. Before you begin, ensure you have met the following requirements:
 
 - Python 3.x installed on your machine
 
 - MariaDB (or MySQL) installed and running
 - Git installed
 
-2. Set up the virtual environment (**optional** but recommended)
+##### 2. Set up the virtual environment (**optional** but recommended)
+
 You can create a virtual environment to manage dependencies:
 
 ```bash
 python -m venv venv-cctfex
 
 # On Windows, run:
-venv-cctfex\Scripts\activate
+.\venv-cctfex\Scripts\activate
 # On Unix or MacOS, run:
 source venv-cctfex/bin/activate
 
 ```
 
-3. Install dependencies
+##### 3. Install dependencies
+
 Install the required Python packages using the following command:
 
 ```bash
 pip install -r requirements.txt
 ```
 
-4. Set up the database
+##### 4. Set up the database
+
 Login to MariaDB/MySQL:
 
 ```bash
@@ -56,12 +59,21 @@ mysql -u your_username -p
 
 ​	Create the database and tables:
 
-> see `spot.sql`
+```bash
+MariaDB [(none)]>
+MariaDB [(none)]> source ./spot.sql;
+MariaDB [(none)]>
 
-5. Configure the application
-  Open the app.py file and update the database connection configuration with your own credentials:
+```
 
-  If you are using the default setting of MariaDB ( for example, using WinNMP), there's no need to change it. 
+Or, create table manually, see `spot.sql`
+
+
+##### 5. Configure the application
+
+Open the app.py file and update the database connection configuration with your own credentials:
+
+If you are using the default setting of MariaDB ( for example, using WinNMP), there's no need to change it. 
 
 ```python
 db_config = {
@@ -72,7 +84,8 @@ db_config = {
 }
 ```
 
-6. Generate test data
+##### 6. Generate test data
+
 You can use the build-in function `generate_test_data()` to easily generate some data for testing.
 
 It is automatically enabled before running the server for easier testing: 
@@ -88,7 +101,7 @@ if __name__ == "__main__":
 Also, you can use `refresh_test_data` endpoint to manually refresh test data.
 
 
-7. Run the application
+##### 7. Run the application
 You can now start the Flask application:
 
 ```bash
@@ -150,9 +163,11 @@ Open your web browser and go to http://127.0.0.1:5000/ to view the website.
 - **URL:** `/order_book`
 - **Method:** `GET`
 - **Description:** Retrieves the current order book.
+- **Request Parameters:**
+  - `type` = `buy` or `sell`
 - **Response:**
   - JSON array of orders.
-
+- **Example:**
 ```bash
 curl -X GET "http://127.0.0.1:5000/order_book?type=buy"
 
@@ -185,8 +200,43 @@ curl -X GET "http://127.0.0.1:5000/order_book?type=sell"
 
 ```
 
+##### 5.  Get trading history
 
-##### 5. Get K-Line Data
+- **URL:** `/trade_history`
+- **Method:** `GET`
+- **Description:** Retrieves K-line data based on historical trades.
+- **Request Parameters:**
+  - `tokenid`(int) - default is `1`
+  - `limit`(int) - amount of the trading history in the response, default is `100`
+- **Response:**
+  - JSON array of candlestick data with the following fields:
+    - `timestamp` (string): The time of the trade.
+    - `amount`(decimal): The amount of the trade.
+    - `price`(decimal): The price of the trade.
+- **Example:**
+```bash
+curl -X GET http://127.0.0.1:5000/trade_history?limit=20
+```
+```bash
+[
+    {
+        "amount": "0.19",
+        "price": "66300.61",
+        "timestamp": "Wed, 04 Sep 2024 23:26:25 GMT"
+    },
+    {
+        "amount": "0.58",
+        "price": "66329.88",
+        "timestamp": "Wed, 04 Sep 2024 23:26:16 GMT"
+    },
+]
+```
+
+
+
+
+
+##### 6. Get K-Line Data
 
 - **URL:** `/kline_data`
 - **Method:** `GET`
@@ -201,7 +251,7 @@ curl -X GET "http://127.0.0.1:5000/order_book?type=sell"
     - `close` (decimal): The closing price.
     - `volume` (decimal): The traded volume.
     - `turnover` (decimal): The turnover (price * volume).
-
+- **Example:**
 ```bash
 curl -X GET http://127.0.0.1:5000/kline_data
 ```
@@ -237,7 +287,9 @@ curl -X GET http://127.0.0.1:5000/kline_data
 ]
 ```
 
-##### 6. Refresh Test Data
+
+
+##### 7. Refresh Test Data
 
 - **URL:** `/refresh_test_data`
 - **Method:** `GET`

@@ -104,7 +104,6 @@ def place_order():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
-    # TODO: 写一下撮合交易的逻辑
     cursor.execute(
         "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
         (
@@ -205,6 +204,26 @@ def get_order_book():
     # TODO: 订单簿按照一个指定宽度来聚合：比如，如果有多个相同价格范围的订单，那么将它们合并成一个条目来显示
     return jsonify({"orders": orders})
 
+# 获取交易历史数据
+@app.route("/trade_history", methods=["GET"])
+def get_trade_history():
+    token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
+    history_limit = int(request.args.get("limit", 100)) 
+
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor(dictionary=True)
+    # 获取交易历史数据
+    cursor.execute(
+        "SELECT price, amount, timestamp FROM trade_history where token_id = %s ORDER BY timestamp DESC LIMIT %s",
+        (token_id, history_limit,),
+    )
+    trades = cursor.fetchall()
+
+    cursor.close()
+    connection.close()
+
+    return jsonify(trades)
+
 
 # 获取K线数据
 @app.route("/kline_data")
@@ -216,8 +235,7 @@ def get_kline_data():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
 
-    # token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
-    token_id = 1
+    token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
 
     # 获取交易历史数据
     cursor.execute(
