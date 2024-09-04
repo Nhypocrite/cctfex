@@ -1,55 +1,278 @@
-<!DOCTYPE html>
-<html lang="en">
+<html>
+
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Stock Trading Platform</title>
-    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <script src="https://cdn.tailwindcss.com">
+    </script>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@400;500;700&amp;display=swap" rel="stylesheet" />
+    <script src="https://cdn.jsdelivr.net/npm/klinecharts/dist/klinecharts.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+
 </head>
-<body>
-    <h1>Welcome, {{ username }}</h1>
 
-    <div id="orderBook">
-        <h2>Order Book</h2>
-        <table>
-            <thead>
-                <tr>
-                    <th>Type</th>
-                    <th>Price</th>
-                    <th>Amount</th>
-                </tr>
-            </thead>
-            <tbody id="orderBookTable"></tbody>
-        </table>
+<body class="bg-gray-900 font-roboto text-gray-200">
+    <div class="max-w-7xl mx-auto p-4">
+        <div class="grid grid-cols-3 gap-4">
+            <!-- Left Column -->
+            <div class="col-span-1">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-md">
+                    <div class="flex items-center mb-4">
+
+                        <img alt="CCTFEX Logo" class="w-20 h-20 mr-4" height="80"
+                            src="{{ url_for('static', filename='image/logo.png') }}" width="80" />
+                        <div>
+                            <h1>Welcome, {{ username }}</h1>
+                            <h1 class="text-2xl font-bold text-gray-100">BTC/USDT</h1>
+                            <p class="text-3xl text-green-500 font-bold">56,987.99</p>
+                        </div>
+                    </div>
+                    <div class="bg-gray-700 p-4 rounded-lg">
+                        <h2 class="text-lg font-bold text-blue-400 mb-2">Order Book (BTC/USDT)</h2>
+                        <div class="border-b-2 border-gray-600 mb-2">
+                            <ul class="flex text-sm font-medium">
+                                <li class="mr-4 pb-2 border-b-2 border-blue-400">Open Orders</li>
+                            </ul>
+                        </div>
+                        <div class="text-sm">
+                            <div class="flex justify-between mb-1 text-gray-400">
+                                <span>Price</span>
+                                <span>Size</span>
+                                <span>Total</span>
+                            </div>
+                            <div id="orderBook" class="overflow-y-auto h-64">
+                                <!-- Orders will be dynamically inserted here -->
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <!-- Middle Column -->
+            <div class="col-span-2">
+                <div class="bg-gray-800 rounded-lg flex-grow">
+                    <div id="chart" class="w-full h-full "></div>
+                </div>
+            </div>
+        </div>
+        <div class="grid grid-cols-3 gap-4 mt-4 h-64">
+            <!-- Buy/Sell Section -->
+            <div class="col-span-2 flex flex-col">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-md flex-grow">
+                    <h2 class="text-lg font-bold text-blue-400 mb-4">
+                        Buy / Sell
+                    </h2>
+                    <div class="grid grid-cols-1 gap-4">
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-400">
+                                Price
+                            </label>
+                            <div class="flex items-center bg-gray-700 p-2 rounded-lg">
+                                <input class="bg-gray-700 w-full outline-none text-gray-200" type="text" value="0.00" />
+                                <span class="ml-2 text-gray-400">
+                                    USDT
+                                </span>
+                            </div>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium mb-1 text-gray-400">
+                                Amount
+                            </label>
+                            <div class="flex items-center bg-gray-700 p-2 rounded-lg">
+                                <input class="bg-gray-700 w-full outline-none text-gray-200" placeholder="Amount"
+                                    type="text" />
+                                <span class="ml-2 text-gray-400">
+                                    BTC
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-between mt-4">
+                        <button class="bg-green-500 text-white py-2 px-4 rounded-lg w-1/2 mr-2">
+                            Buy
+                        </button>
+                        <button class="bg-red-500 text-white py-2 px-4 rounded-lg w-1/2 ml-2">
+                            Sell
+                        </button>
+                    </div>
+                </div>
+            </div>
+            <!-- Market Trades Section -->
+            <div class="col-span-1 flex flex-col">
+                <div class="bg-gray-800 p-4 rounded-lg shadow-md flex-grow">
+                    <h2 class="text-lg font-bold text-blue-400 mb-2">
+                        Market Trades (BTC/USDT)
+                    </h2>
+                    <div class="text-sm">
+                        <div class="flex justify-between mb-1 text-gray-400">
+                            <span>
+                                Price
+                            </span>
+                            <span>
+                                Size
+                            </span>
+                            <span>
+                                Total
+                            </span>
+                        </div>
+                        <div class="overflow-y-auto">
+                            <!-- Repeat for each trade -->
+                            <div class="flex justify-between text-red-500">
+                                <span>
+                                    19852.63
+                                </span>
+                                <span>
+                                    0.050300
+                                </span>
+                                <span>
+                                    2.362877
+                                </span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>
+                                    19852.63
+                                </span>
+                                <span>
+                                    0.050300
+                                </span>
+                                <span>
+                                    2.362877
+                                </span>
+                            </div>
+                            <div class="flex justify-between text-gray-300">
+                                <span>
+                                    19852.63
+                                </span>
+                                <span>
+                                    0.050300
+                                </span>
+                                <span>
+                                    2.362877
+                                </span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
     </div>
 
-    <div id="klineChart">
-        <h2>K-Line Chart</h2>
-        <canvas id="klineCanvas" width="800" height="400"></canvas>
-    </div>
+    <script>
+        $(document).ready(function () {
+            console.log("Document is ready.");
 
-    <div id="orderForm">
-        <h2>Place Order</h2>
-        <form id="orderForm">
-            <label for="orderType">Order Type:</label>
-            <select id="orderType">
-                <option value="1">Buy</option>
-                <option value="2">Sell</option>
-            </select><br>
-            
-            <label for="token_id">Token ID:</label>
-            <input type="number" id="token_id" value="1" readonly><br>
-            
-            <label for="price">Price:</label>
-            <input type="number" id="price" required><br>
-            
-            <label for="amount">Amount:</label>
-            <input type="number" id="amount" required><br>
-            
-            <button type="button" onclick="placeOrder()">Submit Order</button>
-        </form>
-    </div>
+            // Fetch the kline data from the API
+            $.get('http://127.0.0.1:5000/kline_data', function (data) {
+                console.log("K-line data fetched:", data);
 
-    <script src="{{ url_for('static', filename='js/script.js') }}"></script>
+                // Transform the data to match klinecharts format
+                var transformedData = data.map(function (item) {
+                    return {
+                        close: parseFloat(item.close),
+                        high: parseFloat(item.high),
+                        low: parseFloat(item.low),
+                        open: parseFloat(item.open),
+                        timestamp: new Date(item.timestamp).getTime(),
+                        volume: parseFloat(item.volume)
+                    };
+                });
+
+                console.log("Transformed Data:", transformedData);
+
+                // Initialize the chart and apply the data
+                var chart = klinecharts.init('chart');
+                chart.applyNewData(transformedData);
+                console.log("Chart initialized and data applied.");
+
+                // Now fetch and display the buy and sell orders after the chart is ready
+                $.get('http://127.0.0.1:5000/order_book?type=buy', function (buyData) {
+                    console.log("Buy orders fetched:", buyData);
+
+                    var orderBook = $('#orderBook');
+                    orderBook.empty();
+
+                    // Limit to 5 buy orders
+                    var buyOrders = buyData.orders.slice(0, 5);
+
+                    buyOrders.forEach(function (order) {
+                        var total = parseFloat(order.price) * parseFloat(order.amount);
+                        var orderElement = `
+                            <div class="flex justify-between text-green-500">
+                                <span>${parseFloat(order.price).toFixed(2)}</span>
+                                <span>${parseFloat(order.amount).toFixed(6)}</span>
+                                <span>${total.toFixed(6)}</span>
+                            </div>
+                        `;
+                        orderBook.append(orderElement);
+                    });
+
+                    // Add a horizontal line separator
+                    orderBook.append('<hr class="border-gray-600 my-2">');
+
+                    // Fetch and display the sell orders from the API
+                    $.get('http://127.0.0.1:5000/order_book?type=sell', function (sellData) {
+                        console.log("Sell orders fetched:", sellData);
+
+                        // Limit to 5 sell orders
+                        var sellOrders = sellData.orders.slice(0, 5);
+
+                        sellOrders.forEach(function (order) {
+                            var total = parseFloat(order.price) * parseFloat(order.amount);
+                            var orderElement = `
+                                <div class="flex justify-between text-red-500">
+                                    <span>${parseFloat(order.price).toFixed(2)}</span>
+                                    <span>${parseFloat(order.amount).toFixed(6)}</span>
+                                    <span>${total.toFixed(6)}</span>
+                                </div>
+                            `;
+                            orderBook.append(orderElement);
+                        });
+                    });
+                });
+            }).fail(function (jqXHR, textStatus, errorThrown) {
+                console.error("Failed to fetch K-line data:", textStatus, errorThrown);
+            });
+        });
+
+        // Function to handle placing an order
+        function placeOrder(orderType) {
+            var price = parseFloat($('input[type="text"][placeholder="Price"]').val());
+            var amount = parseFloat($('input[type="text"][placeholder="Amount"]').val());
+            var tokenId = 1; // Assuming the token_id is 1 (BTC/USDT), adjust as necessary
+
+            $.ajax({
+                url: "/place_order",
+                method: "POST",
+                contentType: "application/json",
+                data: JSON.stringify({
+                    token_id: tokenId,
+                    type: orderType,
+                    price: price,
+                    amount: amount
+                }),
+                success: function (response) {
+                    if (response.status === "success") {
+                        alert("Order placed successfully!");
+                        // Optionally refresh the order book or chart here
+                    } else {
+                        alert("Error placing order: " + response.message);
+                    }
+                },
+                error: function (xhr, status, error) {
+                    console.error("Failed to place order:", status, error);
+                    alert("An error occurred while placing the order.");
+                }
+            });
+        }
+
+        // Bind click events to the Buy and Sell buttons
+        $('button.bg-green-500').on('click', function () {
+            placeOrder('1'); // '1' for buy order
+        });
+
+        $('button.bg-red-500').on('click', function () {
+            placeOrder('2'); // '2' for sell order
+        });
+    </script>
 </body>
+
 </html>
