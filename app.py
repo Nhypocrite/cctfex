@@ -233,13 +233,16 @@ def get_trade_history():
 @app.route("/kline_data")
 def get_kline_data():
     # TODO: 检查下K线生成逻辑的代码是否正确
-    # TODO: 检查下是不是没有的交易数据的时候也正常生成了K线
     # TODO: 看看请求中要不要加上时间范围，在sql中补充上
-    # TODO: sql注入攻击的预防
+     
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
 
-    token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
+    # if not exist, token_id = 1
+    try:
+        token_id = int(request.args.get("token_id", 1))
+    except ValueError:
+        token_id = 1
 
     # 获取交易历史数据
     cursor.execute(
