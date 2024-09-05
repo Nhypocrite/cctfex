@@ -218,7 +218,7 @@ def get_trade_history():
     cursor = connection.cursor(dictionary=True)
     # 获取交易历史数据
     cursor.execute(
-        "SELECT price, amount, timestamp FROM trade_history where token_id = %s ORDER BY timestamp DESC LIMIT %s",
+        "SELECT order_type, price, amount, timestamp FROM trade_history where token_id = %s ORDER BY timestamp DESC LIMIT %s",
         (token_id, history_limit,),
     )
     trades = cursor.fetchall()
