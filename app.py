@@ -233,7 +233,6 @@ def get_trade_history():
 @app.route("/kline_data")
 def get_kline_data():
     # TODO: 检查下K线生成逻辑的代码是否正确
-    # TODO: 看看请求中要不要加上时间范围，在sql中补充上
      
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
