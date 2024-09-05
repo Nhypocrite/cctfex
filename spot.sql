@@ -19,7 +19,6 @@ CREATE TABLE IF NOT EXISTS order_book (
     amount DECIMAL(10, 2) NOT NULL,
     timestamp DATETIME NOT NULL,
     INDEX idx_token_id (token_id)  -- 添加索引用于排序
-
 );
 
 -- 创建 trade_history 表
@@ -32,5 +31,4 @@ CREATE TABLE IF NOT EXISTS trade_history (
     amount DECIMAL(10, 2) NOT NULL,
     timestamp DATETIME NOT NULL,
     INDEX idx_token_id (token_id)  -- 添加索引用于排序
-
 );
