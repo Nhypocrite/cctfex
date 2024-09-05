@@ -103,55 +103,17 @@
                     </h2>
                     <div class="text-sm">
                         <div class="flex justify-between mb-1 text-gray-400">
-                            <span>
-                                Price
-                            </span>
-                            <span>
-                                Size
-                            </span>
-                            <span>
-                                Total
-                            </span>
+                            <span>Price</span>
+                            <span>Size</span>
+                            <span>Total</span>
                         </div>
-                        <div class="overflow-y-auto">
-                            <!-- Repeat for each trade -->
-                            <div class="flex justify-between text-red-500">
-                                <span>
-                                    19852.63
-                                </span>
-                                <span>
-                                    0.050300
-                                </span>
-                                <span>
-                                    2.362877
-                                </span>
-                            </div>
-                            <div class="flex justify-between text-gray-300">
-                                <span>
-                                    19852.63
-                                </span>
-                                <span>
-                                    0.050300
-                                </span>
-                                <span>
-                                    2.362877
-                                </span>
-                            </div>
-                            <div class="flex justify-between text-gray-300">
-                                <span>
-                                    19852.63
-                                </span>
-                                <span>
-                                    0.050300
-                                </span>
-                                <span>
-                                    2.362877
-                                </span>
-                            </div>
+                        <div class="overflow-y-auto h-64">
+                            <!-- JavaScript will dynamically insert trade data here -->
                         </div>
                     </div>
                 </div>
             </div>
+
         </div>
 
     </div>
@@ -191,7 +153,7 @@
                     orderBook.empty();
 
                     // Limit to 5 buy orders
-                    var buyOrders = buyData.orders.slice(0, 5);
+                    var buyOrders = buyData.orders.slice(0, 6);
 
                     buyOrders.forEach(function (order) {
                         var total = parseFloat(order.price) * parseFloat(order.amount);
@@ -213,7 +175,7 @@
                         console.log("Sell orders fetched:", sellData);
 
                         // Limit to 5 sell orders
-                        var sellOrders = sellData.orders.slice(0, 5);
+                        var sellOrders = sellData.orders.slice(0, 6);
 
                         sellOrders.forEach(function (order) {
                             var total = parseFloat(order.price) * parseFloat(order.amount);
@@ -263,6 +225,31 @@
                 }
             });
         }
+
+
+        $.get('http://127.0.0.1:5000/trade_history', function (tradeData) {
+            console.log("Market trades data fetched:", tradeData);
+
+            var marketTrades = $('.overflow-y-auto');
+            marketTrades.empty();
+
+            // Display the most recent 10 trades
+            var recentTrades = tradeData.slice(0, 14);
+
+            recentTrades.forEach(function (trade) {
+                var total = parseFloat(trade.price) * parseFloat(trade.amount);
+                var tradeElement = `
+                    <div class="flex justify-between ${trade.price >= 0 ? 'text-green-500' : 'text-red-500'}">
+                        <span>${parseFloat(trade.price).toFixed(2)}</span>
+                        <span>${parseFloat(trade.amount).toFixed(6)}</span>
+                        <span>${total.toFixed(6)}</span>
+                    </div>
+                `;
+                marketTrades.append(tradeElement);
+            });
+        }).fail(function (jqXHR, textStatus, errorThrown) {
+            console.error("Failed to fetch market trades data:", textStatus, errorThrown);
+        });
 
         // Bind click events to the Buy and Sell buttons
         $('button.bg-green-500').on('click', function () {
