@@ -244,10 +244,16 @@ def get_kline_data():
     except ValueError:
         token_id = 1
 
+    # get data from how many days before to toady
+    try:
+        days = int(request.args.get("days", 1))
+    except ValueError:
+        days = 1
+
     # 获取交易历史数据
     cursor.execute(
-        "SELECT price, amount, timestamp FROM trade_history where token_id = %s and timestamp > NOW() - INTERVAL 1 DAY ORDER BY timestamp ASC",
-        (token_id,),
+        "SELECT price, amount, timestamp FROM trade_history where token_id = %s and timestamp > NOW() - INTERVAL %s DAY ORDER BY timestamp ASC",
+        (token_id, days),
     )
     trades = cursor.fetchall()
 
