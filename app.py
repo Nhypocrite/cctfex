@@ -143,11 +143,11 @@ def place_order():
         amount -= trade_amount
 
         cursor.execute(
-            "INSERT INTO trade_history (token_id, buy_user_id, sell_user_id, price, amount) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
             (
                 token_id,
                 user_id if order_type == "1" else match_user_id,
-                match_user_id if order_type == "1" else user_id,
+                order_type,
                 match_price,
                 trade_amount,
             ),
