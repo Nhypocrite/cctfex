@@ -109,13 +109,14 @@ def place_order():
     cursor = connection.cursor()
 
     cursor.execute(
-        "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
+        "INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
         (
             token_id,
             user_id,
             order_type,
             price,
             amount,
+            datetime.now(),
         ),
     )
     connection.commit()
@@ -143,13 +144,14 @@ def place_order():
         amount -= trade_amount
 
         cursor.execute(
-            "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
+            "INSERT INTO trade_history (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
             (
                 token_id,
                 user_id,
                 order_type,
                 match_price,
                 trade_amount,
+                datetime.now(),
             ),
         )
         connection.commit()
@@ -168,8 +170,8 @@ def place_order():
 
     if amount > 0:
         cursor.execute(
-            "INSERT INTO order_book (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
-            (token_id, user_id, order_type, price, amount),
+            "INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
+            (token_id, user_id, order_type, price, amount, datetime.now()),
         )
         connection.commit()
 
