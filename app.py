@@ -146,7 +146,7 @@ def place_order():
             "INSERT INTO trade_history (token_id, user_id, order_type, price, amount) VALUES (%s, %s, %s, %s, %s)",
             (
                 token_id,
-                user_id if order_type == "1" else match_user_id,
+                user_id,
                 order_type,
                 match_price,
                 trade_amount,
