@@ -77,7 +77,8 @@
                                 Price
                             </label>
                             <div class="flex items-center bg-gray-700 p-2 rounded-lg">
-                                <input class="bg-gray-700 w-full outline-none text-gray-200" type="text" value="0.00" />
+                                <input id="price-input" class="bg-gray-700 w-full outline-none text-gray-200"
+                                    placeholder="Price" type="text" value="" />
                                 <span class="ml-2 text-gray-400">
                                     USDT
                                 </span>
@@ -88,8 +89,8 @@
                                 Amount
                             </label>
                             <div class="flex items-center bg-gray-700 p-2 rounded-lg">
-                                <input class="bg-gray-700 w-full outline-none text-gray-200" placeholder="Amount"
-                                    type="text" />
+                                <input id="amount-input" class="bg-gray-700 w-full outline-none text-gray-200"
+                                    placeholder="Amount" type="text" />
                                 <span class="ml-2 text-gray-400">
                                     BTC
                                 </span>
@@ -106,6 +107,7 @@
                     </div>
                 </div>
             </div>
+
             <!-- Market Trades Section -->
             <div class="col-span-1 flex flex-col">
                 <div class="bg-gray-800 p-4 rounded-lg shadow-md flex-grow">
@@ -131,7 +133,12 @@
         $(document).ready(function () {
             console.log("Document is ready.");
 
-            // Function to fetch and update the K-line chart
+            var chart = klinecharts.init('chart'); // Initialize the chart once
+
+            // Variable to track if it's the first data load
+            var isInitialLoad = true;
+
+            // Function to fetch and update the K-line chart data
             function fetchAndRenderKlineData() {
                 return $.get('http://127.0.0.1:5000/kline_data')
                     .then(function (data) {
@@ -148,9 +155,14 @@
                             };
                         });
 
-                        var chart = klinecharts.init('chart');
-                        chart.applyNewData(transformedData);
-                        console.log("Chart initialized and data applied.");
+                        if (isInitialLoad) {
+                            chart.applyNewData(transformedData); // Apply the full dataset initially
+                            isInitialLoad = false; // Mark initial load as done
+                        } else {
+                            var latestData = transformedData[transformedData.length - 1]; // Get only the latest data point
+                            chart.updateData(latestData); // Update the chart with the latest data point
+                        }
+                        console.log("Chart updated with new data.");
                     })
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         console.error("Failed to fetch K-line data:", textStatus, errorThrown);
@@ -183,7 +195,6 @@
                     })
                     .then(function (tradeData) {
                         console.log("Latest trade data fetched:", tradeData);
-                        // Now fetch and render the sell orders
                         return $.get('http://127.0.0.1:5000/order_book?type=sell');
                     })
                     .then(function (sellData) {
@@ -225,10 +236,8 @@
                         var latestPrice = parseFloat(latestTrade.price).toFixed(2);
                         var colorClass = latestTrade.order_type === 1 ? "text-green-500" : "text-red-500"; // green for buy, red for sell
 
-                        // Update the displayed price in the market trades section
                         $('#middlePrice').removeClass('text-green-500 text-red-500').addClass(colorClass).text(latestPrice);
                         $('#latesPrice').removeClass('text-green-500 text-red-500').addClass(colorClass).text(latestPrice);
-
 
                         recentTrades.forEach(function (trade) {
                             var total = parseFloat(trade.price) * parseFloat(trade.amount);
@@ -248,17 +257,31 @@
                     });
             }
 
-
             // Main initialization
-            fetchAndRenderKlineData()
-                .then(fetchAndRenderOrderBook)
-                .then(fetchAndRenderMarketTrades);
+            fetchAndRenderKlineData();
+            fetchAndRenderOrderBook();
+            fetchAndRenderMarketTrades();
+
+            // Auto-refresh every 2 seconds
+            setInterval(function () {
+                fetchAndRenderKlineData();
+                fetchAndRenderOrderBook();
+                fetchAndRenderMarketTrades();
+            }, 2000);
 
             // Function to handle placing an order
             function placeOrder(orderType) {
-                var price = parseFloat($('input[type="text"][placeholder="Price"]').val());
-                var amount = parseFloat($('input[type="text"][placeholder="Amount"]').val());
+                var price = parseFloat($('#price-input').val());
+                var amount = parseFloat($('#amount-input').val());
                 var tokenId = 1; // Assuming the token_id is 1 (BTC/USDT), adjust as necessary
+
+                // Log the data to the console before making the AJAX call
+                console.log("Placing order:", {
+                    token_id: tokenId,
+                    type: orderType,
+                    price: price,
+                    amount: amount
+                });
 
                 $.ajax({
                     url: "/place_order",
@@ -271,9 +294,9 @@
                         amount: amount
                     }),
                     success: function (response) {
+                        console.log("Server response:", response); // Log the server response
                         if (response.status === "success") {
                             alert("Order placed successfully!");
-                            // Optionally refresh the order book or chart here
                             fetchAndRenderOrderBook();
                             fetchAndRenderMarketTrades();
                         } else {
@@ -296,6 +319,7 @@
                 placeOrder('2'); // '2' for sell order
             });
         });
+
     </script>
 </body>
 
