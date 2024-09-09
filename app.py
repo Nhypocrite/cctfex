@@ -108,18 +108,18 @@ def place_order():
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
-    cursor.execute(
-        "INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
-        (
-            token_id,
-            user_id,
-            order_type,
-            price,
-            amount,
-            datetime.now(),
-        ),
-    )
-    connection.commit()
+    # cursor.execute(
+    #     "INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
+    #     (
+    #         token_id,
+    #         user_id,
+    #         order_type,
+    #         price,
+    #         amount,
+    #         datetime.now(),
+    #     ),
+    # )
+    # connection.commit()
 
     if order_type == "buy" or order_type == '1': # if the type is 'buy'
             cursor.execute(
@@ -168,6 +168,7 @@ def place_order():
             )
         connection.commit()
 
+    # 如果还有未消耗完的订单，那么插入到订单簿中
     if amount > 0:
         cursor.execute(
             "INSERT INTO order_book (token_id, user_id, order_type, price, amount, timestamp) VALUES (%s, %s, %s, %s, %s, %s)",
