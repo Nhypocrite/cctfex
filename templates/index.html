@@ -130,6 +130,10 @@
     </div>
 
     <script>
+        // 定义公共的 URL 前缀
+        var apiBaseUrl = 'https://intis.top/cctfex/';
+        // var apiBaseUrl = 'http://127.0.0.1:5000/';
+
         $(document).ready(function () {
             console.log("Document is ready.");
 
@@ -140,7 +144,7 @@
 
             // Function to fetch and update the K-line chart data
             function fetchAndRenderKlineData() {
-                return $.get('https://intis.top/cctfex/kline_data')
+                return $.get(apiBaseUrl + 'kline_data')
                     .then(function (data) {
                         console.log("K-line data fetched:", data);
 
@@ -171,7 +175,7 @@
 
             // Function to fetch and update the order book
             function fetchAndRenderOrderBook() {
-                return $.get('https://intis.top/cctfex/order_book?type=buy')
+                return $.get(apiBaseUrl + 'order_book?type=buy')
                     .then(function (buyData) {
                         console.log("Buy orders fetched:", buyData);
 
@@ -195,7 +199,7 @@
                     })
                     .then(function (tradeData) {
                         console.log("Latest trade data fetched:", tradeData);
-                        return $.get('https://intis.top/cctfex/order_book?type=sell');
+                        return $.get(apiBaseUrl + 'order_book?type=sell');
                     })
                     .then(function (sellData) {
                         console.log("Sell orders fetched:", sellData);
@@ -223,7 +227,7 @@
 
             // Function to fetch and update market trades
             function fetchAndRenderMarketTrades() {
-                return $.get('https://intis.top/cctfex/trade_history')
+                return $.get(apiBaseUrl + 'trade_history')
                     .then(function (tradeData) {
                         console.log("Market trades data fetched:", tradeData);
 
