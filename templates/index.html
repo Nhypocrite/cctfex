@@ -140,7 +140,7 @@
 
             // Function to fetch and update the K-line chart data
             function fetchAndRenderKlineData() {
-                return $.get('http://127.0.0.1:5000/kline_data')
+                return $.get('https://intis.top/cctfex/kline_data')
                     .then(function (data) {
                         console.log("K-line data fetched:", data);
 
@@ -171,7 +171,7 @@
 
             // Function to fetch and update the order book
             function fetchAndRenderOrderBook() {
-                return $.get('http://127.0.0.1:5000/order_book?type=buy')
+                return $.get('https://intis.top/cctfex/order_book?type=buy')
                     .then(function (buyData) {
                         console.log("Buy orders fetched:", buyData);
 
@@ -195,7 +195,7 @@
                     })
                     .then(function (tradeData) {
                         console.log("Latest trade data fetched:", tradeData);
-                        return $.get('http://127.0.0.1:5000/order_book?type=sell');
+                        return $.get('https://intis.top/cctfex/order_book?type=sell');
                     })
                     .then(function (sellData) {
                         console.log("Sell orders fetched:", sellData);
@@ -223,7 +223,7 @@
 
             // Function to fetch and update market trades
             function fetchAndRenderMarketTrades() {
-                return $.get('http://127.0.0.1:5000/trade_history')
+                return $.get('https://intis.top/cctfex/trade_history')
                     .then(function (tradeData) {
                         console.log("Market trades data fetched:", tradeData);
 
