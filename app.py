@@ -4,7 +4,8 @@ import mysql.connector
 import hashlib
 import random
 import os
-from datetime import datetime, timedelta
+import threading
+from datetime import datetime, time, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -94,7 +95,7 @@ def index():
 
 # 下单操作
 @app.route("/place_order", methods=["POST"])
-def place_order():
+def place_order_handler():
     if "user_id" not in session:
         return jsonify({"status": "error", "message": "User not logged in"}), 401
 
@@ -104,7 +105,11 @@ def place_order():
     price = data["price"]
     amount = data["amount"]
     user_id = session["user_id"]
+    place_order(token_id, order_type, price, amount, user_id)
 
+
+# 下单操作的函数
+def place_order(token_id, order_type, price, amount, user_id):
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
@@ -198,11 +203,11 @@ def get_order_book():
 
     # Use parameterized query to prevent SQL injection
     if order_type == "buy":
-        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 20"
+        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 20"
     else:
-        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 20"
+        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 20"
     # TODO: 按照价格排序后再给前端送过去？还是让前端自己排序？
-    cursor.execute(query)
+    cursor.execute(query, (token_id,))
 
     orders = cursor.fetchall()
     cursor.close()
@@ -236,7 +241,7 @@ def get_trade_history():
 @app.route("/kline_data")
 def get_kline_data():
     # TODO: 检查下K线生成逻辑的代码是否正确
-     
+    
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
 
@@ -423,6 +428,39 @@ def generate_test_data():
     connection.close()
 
 
+# 实时生成新的订单的函数
+def generate_order(rate=0.2):
+    connection = mysql.connector.connect(**db_config)
+    cursor = connection.cursor()
+
+    while True:
+        cursor.execute("SELECT id, price  FROM order_book WHERE ORDER BY timestamp DESC LIMIT 1",)
+        last_order = cursor.fetchone()
+        price_previous = last_order["price"]
+        
+        # 生成随机的订单簿数据
+        user_id = random.randint(1, 999)
+        order_type = random.choice([1, 2])  # 1: buy, 2: sell
+        price = price_previous + round(random.uniform(-100, 100), 2)  # 卖单价格也随机上下浮动
+        amount = round(random.uniform(0.1, 10), 2)
+        timestamp = datetime.now() 
+        place_order(1, order_type, price, amount, user_id,timestamp)
+
+        # 更新前一次价格为当前价格，模拟市场变化
+        price_previous = price
+
+        # 按照速率暂停（rate秒）
+        time.sleep(rate)
+
+
+
 if __name__ == "__main__":
-    generate_test_data()  # 在应用启动时生成测试数据插入数据库
+    # 在应用启动时生成测试数据插入数据库
+    generate_test_data()  
+
+    # 启动生成订单的线程，速率为每0.2秒生成一条订单
+    order_thread = threading.Thread(target=generate_order, args=(0.2,))
+    order_thread.daemon = True  # 守护线程，主程序退出时自动终止
+    order_thread.start()
+
     app.run(debug=True)
