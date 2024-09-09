@@ -264,8 +264,10 @@ def get_kline_data():
     # 生成K线数据
     kline_data = []
     if trades:
+        # 开始第一条K线
+        start_time = trades[0]["timestamp"].replace(second=0, microsecond=0)
         interval = timedelta(minutes=1)  # 按分钟分割K线
-        start_time = trades[0]["timestamp"]
+
         end_time = start_time + interval
 
         open_price = trades[0]["price"]
@@ -276,7 +278,7 @@ def get_kline_data():
         turnover = 0
 
         for trade in trades:
-            if trade["timestamp"] >= end_time:  # 新的K线
+            if trade["timestamp"] >= end_time:  # 开始新的K线
                 kline_data.append(
                     {
                         "timestamp": start_time.strftime("%Y-%m-%d %H:%M:%S"),
@@ -290,7 +292,7 @@ def get_kline_data():
                 )
                 start_time = end_time
                 end_time = start_time + interval
-                open_price = trade["price"]
+                open_price = close_price    # 开盘价是上一个K线的收盘价
                 high_price = open_price
                 low_price = open_price
                 volume = 0
