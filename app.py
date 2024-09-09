@@ -1,3 +1,4 @@
+import decimal
 from flask import Flask, render_template, redirect, url_for, request, jsonify, session
 from flask_cors import CORS
 import mysql.connector
@@ -5,7 +6,8 @@ import hashlib
 import random
 import os
 import threading
-from datetime import datetime, time, timedelta
+import time
+from datetime import datetime, timedelta
 
 app = Flask(__name__)
 CORS(app)
@@ -105,11 +107,16 @@ def place_order_handler():
     price = data["price"]
     amount = data["amount"]
     user_id = session["user_id"]
-    place_order(token_id, order_type, price, amount, user_id)
+    err = place_order(token_id, order_type, price, amount, user_id)
+    if err:
+        return jsonify({"status": "error", "message": err}), 400
+    return jsonify({"status": "success"})
+
 
 
 # 下单操作的函数
-def place_order(token_id, order_type, price, amount, user_id):
+def place_order(token_id, order_type, price, amount, user_id) -> str:
+    print("received order:", token_id, order_type, price, amount, user_id)
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor()
 
@@ -183,8 +190,8 @@ def place_order(token_id, order_type, price, amount, user_id):
 
     cursor.close()
     connection.close()
+    return ""
 
-    return jsonify({"status": "success"})
 
 
 # 获取订单簿数据
@@ -434,17 +441,19 @@ def generate_order(rate=0.2):
     cursor = connection.cursor()
 
     while True:
-        cursor.execute("SELECT id, price  FROM order_book WHERE ORDER BY timestamp DESC LIMIT 1",)
+        cursor.execute("SELECT id, price FROM order_book ORDER BY timestamp DESC LIMIT 1",)
         last_order = cursor.fetchone()
-        price_previous = last_order["price"]
-        
+        if last_order:
+            price_previous = last_order[1]
+        else:
+            price_previous = random.uniform(49000, 71000)
+
         # 生成随机的订单簿数据
         user_id = random.randint(1, 999)
         order_type = random.choice([1, 2])  # 1: buy, 2: sell
-        price = price_previous + round(random.uniform(-100, 100), 2)  # 卖单价格也随机上下浮动
-        amount = round(random.uniform(0.1, 10), 2)
-        timestamp = datetime.now() 
-        place_order(1, order_type, price, amount, user_id,timestamp)
+        price = round(decimal.Decimal(price_previous) + decimal.Decimal(random.uniform(-100, 100)), 2)
+        amount = round(decimal.Decimal(random.uniform(0.1, 10)), 2)
+        place_order(1, order_type, price, amount, user_id)
 
         # 更新前一次价格为当前价格，模拟市场变化
         price_previous = price
@@ -455,12 +464,15 @@ def generate_order(rate=0.2):
 
 
 if __name__ == "__main__":
+
+    # generate_order(0.2)
+
     # 在应用启动时生成测试数据插入数据库
     generate_test_data()  
 
-    # 启动生成订单的线程，速率为每0.2秒生成一条订单
-    order_thread = threading.Thread(target=generate_order, args=(0.2,))
-    order_thread.daemon = True  # 守护线程，主程序退出时自动终止
-    order_thread.start()
+    # # 启动生成订单的线程，速率为每0.2秒生成一条订单
+    # order_thread = threading.Thread(target=generate_order, args=(1,))
+    # order_thread.daemon = True  # 守护线程，主程序退出时自动终止
+    # order_thread.start()
 
-    app.run(debug=True)
+    # app.run(debug=False, use_reloader=False)
