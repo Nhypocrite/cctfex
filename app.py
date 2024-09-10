@@ -227,7 +227,7 @@ def get_order_book():
 @app.route("/trade_history", methods=["GET"])
 def get_trade_history():
     token_id = int(request.args.get("token_id", 1))  # 可能没有这个参数。如果没有这个参数，那么它就是1
-    history_limit = int(request.args.get("limit", 100)) 
+    history_limit = int(request.args.get("limit", 20)) 
 
     connection = mysql.connector.connect(**db_config)
     cursor = connection.cursor(dictionary=True)
@@ -260,14 +260,14 @@ def get_kline_data():
 
     # get data from how many days before to toady
     try:
-        days = int(request.args.get("days", 1))
+        hours = int(request.args.get("hours", 1))
     except ValueError:
-        days = 1
+        hours = 1
 
     # 获取交易历史数据
     cursor.execute(
-        "SELECT price, amount, timestamp FROM trade_history where token_id = %s and timestamp > NOW() - INTERVAL %s DAY ORDER BY timestamp ASC",
-        (token_id, days),
+        "SELECT price, amount, timestamp FROM trade_history where token_id = %s and timestamp > NOW() - INTERVAL %s HOUR ORDER BY timestamp ASC",
+        (token_id, hours),
     )
     trades = cursor.fetchall()
 

@@ -5,5 +5,5 @@ if __name__ == '__main__':
     app.generate_test_data()  
 
     # 生成订单
-    app.generate_order(0.2)
+    app.generate_order(0.45)
 
