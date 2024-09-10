@@ -210,9 +210,9 @@ def get_order_book():
 
     # Use parameterized query to prevent SQL injection
     if order_type == "buy":
-        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 1 and token_id = %s ORDER BY price DESC LIMIT 20"
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 1 and token_id = %s ORDER BY price DESC LIMIT 5"
     else:
-        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 2 and token_id = %s ORDER BY price ASC LIMIT 20"
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 2 and token_id = %s ORDER BY price ASC LIMIT 5"
     # TODO: 按照价格排序后再给前端送过去？还是让前端自己排序？
     cursor.execute(query, (token_id,))
 
@@ -260,7 +260,7 @@ def get_kline_data():
 
     # get data from how many days before to toady
     try:
-        hours = int(request.args.get("hours", 1))
+        hours = int(request.args.get("hours", 2))
     except ValueError:
         hours = 1
 
