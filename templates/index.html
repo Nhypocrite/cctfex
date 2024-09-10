@@ -39,18 +39,22 @@
                                 <span>Size</span>
                                 <span>Total</span>
                             </div>
+                            <!-- Order Book -->
+                            <!-- Order Book -->
                             <div id="orderBook" class="overflow-y-auto h-64">
-                                <!-- Buy Orders -->
-                                <div id="buyOrders" class="flex flex-col-reverse"></div>
+                                <!-- Sell Orders (Displayed First) -->
+                                <div id="sellOrders"></div>
 
                                 <!-- Price in the middle -->
                                 <hr class="border-gray-600 my-2">
                                 <p id="middlePrice" class="text-1xl font-bold order-book-price text-center"></p>
                                 <hr class="border-gray-600 my-2">
 
-                                <!-- Sell Orders -->
-                                <div id="sellOrders"></div>
+                                <!-- Buy Orders (Displayed Last) -->
+                                <div id="buyOrders" class="flex flex-col-reverse"></div>
                             </div>
+
+
                         </div>
                     </div>
 
@@ -127,6 +131,10 @@
 
         </div>
 
+        <div>
+            <h5 style="text-align: center;">test</h5>
+        </div>
+
     </div>
 
     <script>
@@ -174,16 +182,46 @@
             }
 
             // Function to fetch and update the order book
+            // Function to fetch and update the order book
             function fetchAndRenderOrderBook() {
-                return $.get(apiBaseUrl + 'order_book?type=buy')
+                // Fetch and display the sell orders first
+                return $.get(apiBaseUrl + 'order_book?type=sell')
+                    .then(function (sellData) {
+                        console.log("Sell orders fetched:", sellData);
+
+                        var sellOrdersContainer = $('#sellOrders');
+                        sellOrdersContainer.empty();
+
+                        // Sort sell orders in descending order by price (highest to lowest)
+                        var sellOrders = sellData.orders.sort((a, b) => parseFloat(b.price) - parseFloat(a.price)).slice(0, 5);
+
+                        // Append each sell order to the sell orders container
+                        sellOrders.forEach(function (order) {
+                            var total = parseFloat(order.price) * parseFloat(order.amount);
+                            var orderElement = `
+                    <div class="flex justify-between text-red-500">
+                        <span>${parseFloat(order.price).toFixed(2)}</span>
+                        <span>${parseFloat(order.amount).toFixed(2)}</span>
+                        <span>${total.toFixed(4)}</span>
+                    </div>
+                `;
+                            sellOrdersContainer.append(orderElement);
+                        });
+                    })
+                    .then(function () {
+                        // Now fetch and display the buy orders
+                        return $.get(apiBaseUrl + 'order_book?type=buy');
+                    })
                     .then(function (buyData) {
                         console.log("Buy orders fetched:", buyData);
 
                         var buyOrdersContainer = $('#buyOrders');
                         buyOrdersContainer.empty();
 
-                        var buyOrders = buyData.orders.slice(0, 5);
+                        // Sort buy orders in descending order by price (highest to lowest)
+                        var buyOrders = buyData.orders.sort((b, a) => parseFloat(b.price) - parseFloat(a.price)).slice(0, 5);
 
+                        // Append each buy order to the buy orders container
                         buyOrders.forEach(function (order) {
                             var total = parseFloat(order.price) * parseFloat(order.amount);
                             var orderElement = `
@@ -195,35 +233,12 @@
                 `;
                             buyOrdersContainer.append(orderElement);
                         });
-
-                    })
-                    .then(function (tradeData) {
-                        console.log("Latest trade data fetched:", tradeData);
-                        return $.get(apiBaseUrl + 'order_book?type=sell');
-                    })
-                    .then(function (sellData) {
-                        console.log("Sell orders fetched:", sellData);
-
-                        var sellOrdersContainer = $('#sellOrders');
-                        sellOrdersContainer.empty();
-
-                        var sellOrders = sellData.orders.slice(0, 5);
-                        sellOrders.forEach(function (order) {
-                            var total = parseFloat(order.price) * parseFloat(order.amount);
-                            var orderElement = `
-                    <div  class="flex justify-between text-red-500">
-                        <span>${parseFloat(order.price).toFixed(2)}</span>
-                        <span>${parseFloat(order.amount).toFixed(2)}</span>
-                        <span>${total.toFixed(4)}</span>
-                    </div>
-                `;
-                            sellOrdersContainer.append(orderElement);
-                        });
                     })
                     .fail(function (jqXHR, textStatus, errorThrown) {
                         console.error("Failed to fetch order book data:", textStatus, errorThrown);
                     });
             }
+
 
             // Function to fetch and update market trades
             function fetchAndRenderMarketTrades() {
