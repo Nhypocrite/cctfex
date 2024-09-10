@@ -210,9 +210,9 @@ def get_order_book():
 
     # Use parameterized query to prevent SQL injection
     if order_type == "buy":
-        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 1 ORDER BY price DESC LIMIT 20"
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 1 and token_id = %s ORDER BY price DESC LIMIT 20"
     else:
-        query = "SELECT %s, order_type, price, amount FROM order_book WHERE order_type = 2 ORDER BY price ASC LIMIT 20"
+        query = "SELECT token_id, order_type, price, amount FROM order_book WHERE order_type = 2 and token_id = %s ORDER BY price ASC LIMIT 20"
     # TODO: 按照价格排序后再给前端送过去？还是让前端自己排序？
     cursor.execute(query, (token_id,))
 
