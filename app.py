@@ -439,11 +439,11 @@ def generate_test_data():
 
 # 实时生成新的订单的函数
 def generate_order(rate=0.2):
-    connection = mysql.connector.connect(**db_config)
-    cursor = connection.cursor()
 
     while True:
-        cursor.execute("SELECT id, price FROM order_book ORDER BY timestamp DESC LIMIT 1",)
+        connection = mysql.connector.connect(**db_config)
+        cursor = connection.cursor()
+        cursor.execute("SELECT id, price FROM trade_history ORDER BY timestamp DESC LIMIT 1",)
         last_order = cursor.fetchone()
         if last_order:
             price_previous = last_order[1]
@@ -459,6 +459,9 @@ def generate_order(rate=0.2):
 
         # 更新前一次价格为当前价格，模拟市场变化
         price_previous = price
+
+        cursor.close()
+        connection.close()
 
         # 按照速率暂停（rate秒）
         time.sleep(rate)
