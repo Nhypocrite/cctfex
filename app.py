@@ -359,7 +359,8 @@ def generate_test_data():
     cursor.execute("TRUNCATE TABLE order_book")
 
     order_types = [1, 2]  # 1: buy, 2: sell
-    price_previous = random.uniform(49000, 71000)
+    price_initlial = random.uniform(49000, 71000)
+    price_previous = price_initlial
 
     # 生成随机的订单簿数据
     for _ in range(100):
@@ -407,6 +408,7 @@ def generate_test_data():
         # TODO: 非重要优化：插入数据时，多条数据一起插入而不是一条一条插入
 
     # 生成随机的历史交易数据
+    price_previous = price_initlial
     timestamp = datetime.now()
 
     for _ in range(4000):  # 生成数据
@@ -465,14 +467,13 @@ def generate_order(rate=0.2):
 
 if __name__ == "__main__":
 
-    # generate_order(0.2)
+    # # 在应用启动时生成测试数据插入数据库
+    # generate_test_data()  
 
-    # 在应用启动时生成测试数据插入数据库
-    generate_test_data()  
-
+    # # 暂时在外部手动执行，并行有点问题
     # # 启动生成订单的线程，速率为每0.2秒生成一条订单
     # order_thread = threading.Thread(target=generate_order, args=(1,))
     # order_thread.daemon = True  # 守护线程，主程序退出时自动终止
     # order_thread.start()
 
-    # app.run(debug=False, use_reloader=False)
+    app.run(debug=False, use_reloader=False)
